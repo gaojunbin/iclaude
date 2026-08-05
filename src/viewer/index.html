@@ -1656,6 +1656,17 @@
         try { el.setSelectionRange(focus.start, focus.end); } catch (e) {}
       }
     }
+    function setHtmlIfChanged(el, html) {
+      if (!el) return false;
+      if (el.__agentmemoryLastHtml === html) return false;
+      el.innerHTML = html;
+      el.__agentmemoryLastHtml = html;
+      return true;
+    }
+    function showLoadingIfStale(el, loaded, html) {
+      if (!el) return;
+      if (!loaded || !el.innerHTML.trim()) setHtmlIfChanged(el, html);
+    }
     function getViewerToken() {
       try { return sessionStorage.getItem(VIEWER_TOKEN_STORAGE_KEY) || ''; } catch (_) { return ''; }
     }
@@ -1805,9 +1816,11 @@
       }
     }
 
-    async function loadDashboard() {
+    async function loadDashboard(opts) {
+      opts = opts || {};
+      var silent = opts.silent === true;
       var el = document.getElementById('view-dashboard');
-      el.innerHTML = '<div class="loading">Loading dashboard...</div>';
+      if (!silent) showLoadingIfStale(el, state.dashboard.loaded, '<div class="loading">Loading dashboard...</div>');
       try {
         var results = await Promise.all([
           api('health', { readErrorBody: true }),
@@ -1821,16 +1834,17 @@
           apiGet('lessons'),
           apiGet('crystals')
         ]);
-        state.dashboard.health = results[0];
-        state.dashboard.sessions = (results[1] && results[1].sessions) || [];
-        state.dashboard.memories = (results[2] && results[2].memories) || [];
-        state.dashboard.graphStats = results[3];
-        state.dashboard.recentAudit = (results[4] && results[4].entries) || [];
-        state.dashboard.semantic = (results[5] && results[5].facts) || (results[5] && results[5].semantic) || [];
-        state.dashboard.procedural = (results[6] && results[6].procedures) || (results[6] && results[6].procedural) || [];
-        state.dashboard.lessons = (results[8] && results[8].lessons) || [];
-        state.dashboard.crystals = (results[9] && results[9].crystals) || [];
-        state.dashboard.relations = (results[7] && results[7].relations) || [];
+        if (silent && results.every(function(r) { return !r; })) return;
+        state.dashboard.health = results[0] || (silent ? state.dashboard.health : null);
+        state.dashboard.sessions = results[1] ? ((results[1] && results[1].sessions) || []) : (silent ? state.dashboard.sessions : []);
+        state.dashboard.memories = results[2] ? ((results[2] && results[2].memories) || []) : (silent ? state.dashboard.memories : []);
+        state.dashboard.graphStats = results[3] || (silent ? state.dashboard.graphStats : null);
+        state.dashboard.recentAudit = results[4] ? ((results[4] && results[4].entries) || []) : (silent ? state.dashboard.recentAudit : []);
+        state.dashboard.semantic = results[5] ? ((results[5] && results[5].facts) || (results[5] && results[5].semantic) || []) : (silent ? state.dashboard.semantic : []);
+        state.dashboard.procedural = results[6] ? ((results[6] && results[6].procedures) || (results[6] && results[6].procedural) || []) : (silent ? state.dashboard.procedural : []);
+        state.dashboard.lessons = results[8] ? ((results[8] && results[8].lessons) || []) : (silent ? state.dashboard.lessons : []);
+        state.dashboard.crystals = results[9] ? ((results[9] && results[9].crystals) || []) : (silent ? state.dashboard.crystals : []);
+        state.dashboard.relations = results[7] ? ((results[7] && results[7].relations) || []) : (silent ? state.dashboard.relations : []);
         state.dashboard.loaded = true;
         renderDashboard();
       } catch (err) {
@@ -1843,14 +1857,15 @@
         // Surface the error in the panel + log full detail to console.
         var msg = (err && err.message) ? err.message : String(err);
         console.error('[viewer] loadDashboard failed:', err);
-        el.innerHTML =
+        if (silent && state.dashboard.loaded) return;
+        setHtmlIfChanged(el,
           '<div class="loading" style="color:var(--accent);">' +
           'Dashboard failed to load: ' + msg +
           '<br><br><span style="font-size:12px;color:var(--ink-muted);">' +
           'Check the browser console for the full error. If you see CSP ' +
           'violations, please open an issue with the agentmemory version ' +
           '(top-right of the viewer) and the violation text.' +
-          '</span></div>';
+          '</span></div>');
       }
     }
 
@@ -2110,13 +2125,12 @@
       html += '<div style="text-align:center;margin-top:20px;"><button class="btn btn-primary" data-action="refresh-dashboard">Refresh</button>';
       html += '<span style="font-size:10px;color:var(--ink-faint);margin-left:10px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.08em;">Auto-refresh 30s</span></div>';
 
-      el.innerHTML = html;
+      setHtmlIfChanged(el, html);
     }
 
     var dashboardTimer = null;
     function refreshDashboard() {
-      state.dashboard.loaded = false;
-      loadDashboard();
+      loadDashboard({ silent: state.dashboard.loaded });
     }
     function startDashboardAutoRefresh() {
       if (dashboardTimer) clearInterval(dashboardTimer);
@@ -2852,13 +2866,16 @@
       }
     }
 
-    async function loadMemories() {
+    async function loadMemories(opts) {
+      opts = opts || {};
+      var silent = opts.silent === true;
       var el = document.getElementById('view-memories');
-      el.innerHTML = '<div class="loading">Loading memories...</div>';
+      if (!silent) showLoadingIfStale(el, state.memories.loaded, '<div class="loading">Loading memories...</div>');
       // cap at 2000 so the viewer remains responsive on large
       // corpora. Older endpoints returned the full unbounded list which
       // hit the iii invocation timeout and the UI fell through to 0.
       var result = await apiGet('memories?latest=true&limit=2000');
+      if (!result && silent && state.memories.loaded) return;
       var items = (result && result.memories) || [];
       // Newest first — server returns KV-insertion order.
       items.sort(function(a, b) {
@@ -2963,7 +2980,11 @@
       }
 
       var __focus = captureSearchFocus(['mem-search']);
-      el.innerHTML = html;
+      var changed = setHtmlIfChanged(el, html);
+      if (!changed) {
+        restoreSearchFocus(__focus);
+        return;
+      }
 
       var searchInput = document.getElementById('mem-search');
       if (searchInput) {
@@ -3223,13 +3244,16 @@
       renderObservations();
     }
 
-    async function loadActivity() {
+    async function loadActivity(opts) {
+      opts = opts || {};
+      var silent = opts.silent === true;
       var el = document.getElementById('view-activity');
-      el.innerHTML = '<div class="loading">Loading activity...</div>';
+      if (!silent) showLoadingIfStale(el, state.activity.loaded, '<div class="loading">Loading activity...</div>');
       var results = await Promise.all([
         apiGet('sessions'),
         apiGet('audit?limit=200')
       ]);
+      if (!results[0] && silent && state.activity.loaded) return;
       var sessions = (results[0] && results[0].sessions) || [];
       var auditEntries = (results[1] && results[1].entries) || [];
 
@@ -3357,13 +3381,16 @@
 
       html += '</div>';
 
-      el.innerHTML = html;
+      setHtmlIfChanged(el, html);
     }
 
-    async function loadSessions() {
+    async function loadSessions(opts) {
+      opts = opts || {};
+      var silent = opts.silent === true;
       var el = document.getElementById('view-sessions');
-      el.innerHTML = '<div class="loading">Loading sessions...</div>';
+      if (!silent) showLoadingIfStale(el, state.sessions.loaded, '<div class="loading">Loading sessions...</div>');
       var result = await apiGet('sessions');
+      if (!result && silent && state.sessions.loaded) return;
       state.sessions.items = (result && result.sessions) || [];
       state.sessions.loaded = true;
       renderSessions();
@@ -3398,9 +3425,9 @@
       }
       html += '</div>';
       html += '<div id="session-detail"></div>';
-      el.innerHTML = html;
+      var changed = setHtmlIfChanged(el, html);
 
-      if (state.sessions.selectedId) renderSessionDetail();
+      if (changed && state.sessions.selectedId) renderSessionDetail();
     }
 
     function selectSession(id) {
@@ -3983,17 +4010,13 @@
       pollTimer = setInterval(function() {
         tick++;
         if (state.activeTab === 'dashboard') {
-          state.dashboard.loaded = false;
-          loadDashboard();
+          loadDashboard({ silent: true });
         } else if (state.activeTab === 'memories') {
-          state.memories.loaded = false;
-          loadMemories();
+          loadMemories({ silent: true });
         } else if (state.activeTab === 'sessions') {
-          state.sessions.loaded = false;
-          loadSessions();
+          loadSessions({ silent: true });
         } else if (state.activeTab === 'activity') {
-          state.activity.loaded = false;
-          loadActivity();
+          loadActivity({ silent: true });
         }
         if (tick % WS_REPROBE_EVERY_TICKS === 0) {
           var ws = state.ws;
@@ -4148,8 +4171,7 @@
         }
       }
       if (state.activeTab === 'dashboard') {
-        state.dashboard.loaded = false;
-        loadDashboard();
+        loadDashboard({ silent: true });
       }
       if (state.activeTab === 'activity' && msg.observation) {
         state.activity.observations.unshift(msg.observation);

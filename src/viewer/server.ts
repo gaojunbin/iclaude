@@ -108,6 +108,7 @@ export function isHostAllowed(
   headerHost: string | string[] | undefined,
   allowed: Set<string>,
 ): boolean {
+  if (allowed.has("*")) return true;
   if (typeof headerHost !== "string") return false;
   const lower = headerHost.toLowerCase().trim();
   if (!lower) return false;

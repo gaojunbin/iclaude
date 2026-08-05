@@ -1,0 +1,12 @@
+.git
+.github
+node_modules
+dist
+data
+.env
+*.log
+npm-debug.log*
+.DS_Store
+website/node_modules
+website/.next
+coverage

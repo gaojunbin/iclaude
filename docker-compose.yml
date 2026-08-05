@@ -1,42 +1,52 @@
-services:
-  # One-shot init container: docker creates named volumes root:root mode
-  # 755, but the iii-engine image is distroless and runs as UID 65532
-  # with no `chown` of its own. Without this, /data is unwritable, the
-  # engine silently buffers in RAM, and state evaporates on every
-  # restart — the exact symptom v0.9.7's working-directory fix set out
-  # to solve. Runs once at compose-up and exits.
-  iii-init:
-    image: busybox:1.36
-    user: "0:0"
-    volumes:
-      - "${AGENTMEMORY_DATA_DIR:-iii-data}:/data"
-    entrypoint: ["sh", "-c", "chown -R 65532:65532 /data && chmod 755 /data"]
-    restart: "no"
+name: iclaude
 
-  iii-engine:
-    # Pinned to v0.11.2 — the last engine that runs agentmemory's current
-    # worker model cleanly. v0.11.6 introduces a new sandbox-everything-
-    # via-`iii worker add` model that agentmemory hasn't been refactored
-    # for yet; the architectural mismatch surfaces as EPIPE reconnect
-    # loops and empty search after save. Bump only after agentmemory is
-    # refactored to register as a sandboxed worker.
-    #
-    # Override per-shell or via .env file:
-    #   AGENTMEMORY_III_VERSION=0.11.7 docker compose up
-    image: iiidev/iii:${AGENTMEMORY_III_VERSION:-0.11.2}
-    user: "65532:65532"
-    depends_on:
-      iii-init:
-        condition: service_completed_successfully
-    ports:
-      - "127.0.0.1:49134:49134"
-      - "127.0.0.1:3111:3111"
-      - "127.0.0.1:3112:3112"
-      - "127.0.0.1:9464:9464"
-    volumes:
-      - "${AGENTMEMORY_DATA_DIR:-iii-data}:/data"
-      - ./iii-config.docker.yaml:/app/config.yaml:ro
+services:
+  iclaude:
+    image: iclaude:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        III_VERSION: "0.11.2"
     restart: unless-stopped
+    environment:
+      - AGENTMEMORY_DATA_DIR=/data
+      - AGENTMEMORY_TOOLS=${AGENTMEMORY_TOOLS:-all}
+      - AGENTMEMORY_VIEWER_HOST=0.0.0.0
+      - VIEWER_ALLOWED_HOSTS=*
+      - AGENTMEMORY_AUTO_COMPRESS=${AGENTMEMORY_AUTO_COMPRESS:-true}
+      - AGENTMEMORY_INJECT_CONTEXT=${AGENTMEMORY_INJECT_CONTEXT:-true}
+      - CONSOLIDATION_ENABLED=${CONSOLIDATION_ENABLED:-true}
+      - GRAPH_EXTRACTION_ENABLED=${GRAPH_EXTRACTION_ENABLED:-true}
+
+      - OPENAI_API_KEY
+      - OPENAI_BASE_URL
+      - OPENAI_MODEL
+      - ANTHROPIC_API_KEY
+      - ANTHROPIC_BASE_URL
+      - GEMINI_API_KEY
+      - GOOGLE_API_KEY
+      - OPENROUTER_API_KEY
+      - MINIMAX_API_KEY
+      - VOYAGE_API_KEY
+      - COHERE_API_KEY
+    expose:
+      - "3111"
+      - "3113"
+    ports:
+      - "0.0.0.0:3111:3111"
+      - "0.0.0.0:3113:3113"
+    volumes:
+      - iclaude-data:/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -fsS http://127.0.0.1:3111/agentmemory/livez || exit 1
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    stop_grace_period: 30s
     logging:
       driver: json-file
       options:
@@ -44,4 +54,4 @@ services:
         max-file: "3"
 
 volumes:
-  iii-data:
+  iclaude-data:

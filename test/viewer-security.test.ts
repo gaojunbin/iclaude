@@ -109,6 +109,13 @@ describe("viewer host allowlist (DNS rebinding defence)", () => {
     expect(isHostAllowed("LocalHost:3113", allowed)).toBe(true);
   });
 
+  it("allows an explicit wildcard host override for trusted reverse proxies", () => {
+    const allowed = new Set(["*"]);
+    expect(isHostAllowed("iclaude.example.com", allowed)).toBe(true);
+    expect(isHostAllowed("127.0.0.1:3113", allowed)).toBe(true);
+    expect(isHostAllowed(undefined, allowed)).toBe(true);
+  });
+
   it("honours operator-supplied VIEWER_ALLOWED_ORIGINS on the host check", () => {
     const custom = buildAllowedHosts(
       ["http://memory.internal:8080", "http://localhost:3113"],
