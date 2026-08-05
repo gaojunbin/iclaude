@@ -17,6 +17,7 @@ COPY --from=iii-image /app/iii /usr/local/bin/iii
 WORKDIR /opt/agentmemory
 RUN printf '{"name":"agentmemory-deploy","version":"1.0.0","private":true,"overrides":{"iii-sdk":"%s"}}\n' "${III_SDK_VERSION}" > package.json \
  && npm install "@agentmemory/agentmemory@${AGENTMEMORY_VERSION}" --omit=optional --no-fund --no-audit \
+ && node -e 'const fs=require("node:fs");const dir="/opt/agentmemory/node_modules/@agentmemory/agentmemory/dist";const from="function isHostAllowed(headerHost, allowed) {\n\tif (typeof headerHost !== \"string\") return false;\n\tconst lower = headerHost.toLowerCase().trim();\n\tif (!lower) return false;\n\treturn allowed.has(lower);\n}";const to="function isHostAllowed(headerHost, allowed) {\n\tif (allowed.has(\"*\")) return true;\n\tif (typeof headerHost !== \"string\") return false;\n\tconst lower = headerHost.toLowerCase().trim();\n\tif (!lower) return false;\n\treturn allowed.has(lower);\n}";let patched=0;for(const name of fs.readdirSync(dir)){if(!name.endsWith(".mjs"))continue;const p=dir+"/"+name;let s=fs.readFileSync(p,"utf8");if(s.includes(from)){fs.writeFileSync(p,s.replaceAll(from,to));patched++;}}if(patched===0)throw new Error("viewer host allow patch target not found");' \
  && ln -s /opt/agentmemory/node_modules/.bin/agentmemory /usr/local/bin/agentmemory
 
 ENV AGENTMEMORY_III_VERSION=${III_VERSION} \

@@ -1,13 +1,13 @@
 <p align="center">
-  <img src="assets/banner.png" alt="agentmemory — Persistent memory for AI coding agents" width="720" />
+  <img src="assets/banner.png" alt="iclaude — Persistent memory for AI coding agents" width="720" />
 </p>
 
 <p align="center">
   <strong>
-    Your coding agent remembers everything. No more re-explaining.
+    iclaude: your coding agent remembers everything. No more re-explaining.
     Built on <a href="https://github.com/iii-hq/iii">iii engine</a>
   </strong><br/>
-  Persistent memory for Claude Code, GitHub Copilot CLI, Cursor, Gemini CLI, Codex CLI, Hermes, OpenClaw, pi, OpenCode, and any MCP client.
+  A second-development fork of agentmemory for Claude Code, GitHub Copilot CLI, Cursor, Gemini CLI, Codex CLI, Hermes, OpenClaw, pi, OpenCode, and any MCP client.
 </p>
 
 <p align="center">
@@ -26,22 +26,13 @@
 </p>
 
 <p align="center">
-  <a href="https://trendshift.io/repositories/25123" target="_blank"><img src="https://trendshift.io/api/badge/repositories/25123" alt="rohitg00/agentmemory | Trendshift" width="250" height="55"/></a>
+  <em>iclaude keeps the original agentmemory architecture and is prepared for independent development under <code>gaojunbin/iclaude</code>.</em>
 </p>
 
 <p align="center">
-  <a href="https://gist.github.com/rohitg00/2067ab416f7bbe447c1977edaaa681e2"><img src="https://img.shields.io/badge/Viral%20GitHub%20Gist-1.3k%20stars%20%2F%20182%20forks-FF6B35?style=for-the-badge&logo=github&logoColor=white&labelColor=1a1a1a" alt="Design doc: 1.3k stars / 182 forks on the gist" /></a>
-</p>
-
-<p align="center">
-  <em>The gist extends Karpathy's LLM Wiki pattern with confidence scoring, lifecycle, knowledge graphs, and hybrid search: agentmemory is the implementation.</em>
-</p>
-
-<p align="center">
-  <a href="https://www.npmjs.com/package/@agentmemory/agentmemory"><img src="https://img.shields.io/npm/v/@agentmemory/agentmemory?color=CB3837&label=npm&style=for-the-badge&logo=npm" alt="npm version" /></a>
-  <a href="https://github.com/rohitg00/agentmemory/actions"><img src="https://img.shields.io/github/actions/workflow/status/rohitg00/agentmemory/ci.yml?label=tests&style=for-the-badge&logo=github" alt="CI" /></a>
-  <a href="https://github.com/rohitg00/agentmemory/blob/main/LICENSE"><img src="https://img.shields.io/github/license/rohitg00/agentmemory?color=blue&style=for-the-badge" alt="License" /></a>
-  <a href="https://github.com/rohitg00/agentmemory/stargazers"><img src="https://img.shields.io/github/stars/rohitg00/agentmemory?style=for-the-badge&color=yellow&logo=github" alt="Stars" /></a>
+  <a href="https://github.com/gaojunbin/iclaude/actions"><img src="https://img.shields.io/github/actions/workflow/status/gaojunbin/iclaude/ci.yml?branch=master&label=tests&style=for-the-badge&logo=github" alt="CI" /></a>
+  <a href="https://github.com/gaojunbin/iclaude/blob/master/LICENSE"><img src="https://img.shields.io/github/license/gaojunbin/iclaude?color=blue&style=for-the-badge" alt="License" /></a>
+  <a href="https://github.com/gaojunbin/iclaude/stargazers"><img src="https://img.shields.io/github/stars/gaojunbin/iclaude?style=for-the-badge&color=yellow&logo=github" alt="Stars" /></a>
 </p>
 
 <p align="center">
@@ -54,7 +45,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/demo.gif" alt="agentmemory demo" width="720" />
+  <img src="assets/demo.gif" alt="iclaude demo" width="720" />
 </p>
 
 <p align="center">
@@ -76,27 +67,29 @@
 
 ## Install
 
-Fastest path if you use a coding agent: hand it this one instruction and it installs, wires, and verifies agentmemory end to end.
+Fastest path if you use a coding agent: hand it this one instruction and it installs, wires, and verifies iclaude end to end.
 
-> Retrieve and follow the instructions at: https://raw.githubusercontent.com/rohitg00/agentmemory/main/INSTALL_FOR_AGENTS.md
+> Retrieve and follow the instructions at: https://raw.githubusercontent.com/gaojunbin/iclaude/master/INSTALL_FOR_AGENTS.md
 
-On Windows the fast path is WSL2. Native Windows engine setup is manual (about 10 to 20 minutes) and `agentmemory connect` is currently unsupported there. See the [Windows notes](#windows) below for the step-by-step.
+On Windows the fast path is WSL2. Native Windows engine setup is manual (about 10 to 20 minutes) and `iclaude connect` is currently unsupported there. See the [Windows notes](#windows) below for the step-by-step.
 
 ```bash
-npm install -g @agentmemory/agentmemory   # once — bare `agentmemory` on PATH
+npm install -g .                          # from this checkout — bare `iclaude` on PATH
 # If you hit EACCES on macOS/Linux system Node installs, retry with:
-# sudo npm install -g @agentmemory/agentmemory
-agentmemory                                      # start the memory server on :3111
-agentmemory demo                                 # seed sample sessions + prove recall
-agentmemory demo --serve                         # one command: boot server, run demo, tear down (no second terminal)
-agentmemory connect claude-code                  # wire MCP into your agent (also: copilot-cli, codex, cursor, gemini-cli, ...)
-npx skills add rohitg00/agentmemory -y           # install 15 native skills (8 you can invoke, 7 reference) so your agent knows when to use the tools
+# sudo npm install -g .
+iclaude                                  # start the memory server on :3111
+iclaude demo                             # seed sample sessions + prove recall
+iclaude demo --serve                     # one command: boot server, run demo, tear down (no second terminal)
+iclaude connect claude-code              # wire MCP into your agent (also: copilot-cli, codex, cursor, gemini-cli, ...)
+npx skills add gaojunbin/iclaude -y      # install native skills so your agent knows when to use the tools
 ```
 
-Or via `npx` (no install):
+During the transition, the legacy `agentmemory` binary remains available as an alias for compatibility.
+
+Or via local package execution:
 
 ```bash
-npx @agentmemory/agentmemory
+npx .
 ```
 
 Heads-up — npx caches per version. If a bare `npx @agentmemory/agentmemory` serves an older release, force the latest with `npx -y @agentmemory/agentmemory@latest`, or clear the cache once with `rm -rf ~/.npm/_npx` (macOS/Linux; on Windows delete `%LOCALAPPDATA%\npm-cache\_npx`). The first npx run from v0.9.16+ prompts to install globally inline so the bare `agentmemory` command works everywhere afterwards.

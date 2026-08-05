@@ -1,9 +1,10 @@
 {
-  "name": "@agentmemory/mcp",
+  "name": "iclaude-mcp",
   "version": "0.9.28",
-  "description": "Standalone MCP server for agentmemory — thin shim that re-exposes @agentmemory/agentmemory's MCP entrypoint",
+  "description": "Standalone MCP server for iclaude — thin shim that re-exposes iclaude's MCP entrypoint",
   "type": "module",
   "bin": {
+    "iclaude-mcp": "./bin.mjs",
     "agentmemory-mcp": "./bin.mjs"
   },
   "files": [
@@ -16,19 +17,20 @@
     "agent",
     "memory",
     "mcp",
-    "agentmemory"
+    "agentmemory",
+    "iclaude"
   ],
-  "author": "Rohit Ghumare <ghumare64@gmail.com>",
+  "author": "gaojunbin",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/rohitg00/agentmemory",
+    "url": "git+ssh://git@github.com/gaojunbin/iclaude.git",
     "directory": "packages/mcp"
   },
-  "homepage": "https://github.com/rohitg00/agentmemory#readme",
-  "bugs": "https://github.com/rohitg00/agentmemory/issues",
+  "homepage": "https://github.com/gaojunbin/iclaude#readme",
+  "bugs": "https://github.com/gaojunbin/iclaude/issues",
   "dependencies": {
-    "@agentmemory/agentmemory": "~0.9.0"
+    "iclaude": "~0.9.0"
   },
   "publishConfig": {
     "access": "public",

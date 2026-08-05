@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>agentmemory viewer</title>
+  <title>iclaude viewer</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <!-- Removed Google Fonts <link> in #323: the viewer CSP is strict
        (default-src 'none', style-src 'unsafe-inline', font-src 'self')
@@ -138,6 +138,22 @@
       display: flex;
       align-items: center;
       gap: 12px;
+    }
+    .language-select {
+      padding: 3px 8px;
+      border: 1px solid var(--border-light);
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-ui);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+    }
+    .language-select:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
     }
     .ws-status {
       font-size: 10px;
@@ -977,11 +993,15 @@
 <body>
   <div class="app-header">
     <a class="brand" href="#dashboard" data-tab-link="dashboard" aria-label="Open dashboard">
-      <h1>agentmemory</h1>
+      <h1>iclaude</h1>
       <span class="version">v__AGENTMEMORY_VERSION__</span>
     </a>
     <div class="header-right">
       <span class="dateline" id="dateline"></span>
+      <select id="language-select" class="language-select" aria-label="Language">
+        <option value="en">English</option>
+        <option value="zh-CN">中文</option>
+      </select>
       <button id="theme-toggle" class="btn" style="font-size:9px;padding:3px 10px;letter-spacing:0.1em;margin-right:8px;" data-action="toggle-theme">DARK</button>
       <span id="ws-status" class="ws-status disconnected">live updates off</span>
     </div>
@@ -1023,11 +1043,11 @@
   </div>
 
   <footer id="viewer-footer" class="viewer-footer">
-    <span>agentmemory viewer · <span id="footer-version">loading...</span></span>
+    <span>iclaude viewer · <span id="footer-version">loading...</span></span>
     <span class="footer-sep">·</span>
-    <a href="https://github.com/rohitg00/agentmemory" target="_blank" rel="noopener">github</a>
+    <a href="https://github.com/gaojunbin/iclaude" target="_blank" rel="noopener">github</a>
     <span class="footer-sep">·</span>
-    <a href="https://github.com/rohitg00/agentmemory#readme" target="_blank" rel="noopener">docs</a>
+    <a href="https://github.com/gaojunbin/iclaude#readme" target="_blank" rel="noopener">docs</a>
     <span class="footer-sep">·</span>
     <a id="footer-feedback" href="#" target="_blank" rel="noopener">report issue &rarr;</a>
   </footer>
@@ -1059,14 +1079,447 @@
       WS_DIRECT_URL = WS_URL + '/stream/mem-live/viewer';
     }
 
-    var dateEl = document.getElementById('dateline');
-    if (dateEl) dateEl.textContent = new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+    var LANGUAGE_STORAGE_KEY = 'agentmemory-language';
+    var I18N_ZH = {
+      "iclaude viewer": "iclaude 查看器",
+      "iclaude viewer ·": "iclaude 查看器 ·",
+      "Language": "语言",
+      "Open dashboard": "打开仪表盘",
+      "DARK": "深色",
+      "LIGHT": "浅色",
+      "live updates off": "实时更新关闭",
+      "live": "实时",
+      "connecting...": "连接中...",
+      "Dashboard": "仪表盘",
+      "Graph": "图谱",
+      "Memories": "记忆",
+      "Timeline": "时间线",
+      "Sessions": "会话",
+      "Lessons": "经验",
+      "Actions": "行动",
+      "Crystals": "晶体",
+      "Audit": "审计",
+      "Activity": "活动",
+      "Profile": "画像",
+      "Replay": "回放",
+      "loading...": "加载中...",
+      "github": "GitHub",
+      "docs": "文档",
+      "report issue →": "报告问题 →",
+      "Viewer authorization required": "需要 Viewer 授权",
+      "Enter": "输入",
+      "Enter AGENTMEMORY_SECRET to unlock viewer API access.": "输入 AGENTMEMORY_SECRET 以解锁 Viewer API 访问。",
+      "to unlock viewer API access.": "以解锁 Viewer API 访问。",
+      "Unlock": "解锁",
+      "Loading dashboard...": "正在加载仪表盘...",
+      "Dashboard failed to load:": "仪表盘加载失败：",
+      "Check the browser console for the full error. If you see CSP violations, please open an issue with the agentmemory version (top-right of the viewer) and the violation text.": "请查看浏览器控制台获取完整错误。如果看到 CSP 违规，请带上 agentmemory 版本和违规文本提交 issue。",
+      "First run → magical moment in 10 seconds": "首次运行 → 10 秒看到效果",
+      "Seed sample data + prove semantic recall works": "写入示例数据并验证语义召回",
+      "iclaude is running but hasn’t seen any sessions yet. Run the demo command in a second terminal: it seeds 3 realistic coding sessions and proves the hybrid search finds semantically-related memories that keyword search would miss.": "iclaude 已运行，但还没有看到任何会话。在另一个终端运行 demo 命令：它会写入 3 个真实感编码会话，并证明混合搜索能找到关键词搜索会漏掉的语义相关记忆。",
+      "Or: wire up your real agent →": "或者：接入你的真实 Agent →",
+      "active": "活跃",
+      "completed": "已完成",
+      "pending": "待处理",
+      "done": "完成",
+      "blocked": "阻塞",
+      "cancelled": "已取消",
+      "unknown": "未知",
+      "healthy": "健康",
+      "degraded": "降级",
+      "critical": "严重",
+      "latest versions": "最新版本",
+      "confidence-scored": "带置信度评分",
+      "action digests": "行动摘要",
+      "Health": "健康",
+      "Graph Nodes": "图谱节点",
+      "Function Calls": "函数调用",
+      "Circuit Breaker": "断路器",
+      "Token Savings": "Token 节省",
+      "System Resources": "系统资源",
+      "Heap": "堆内存",
+      "RSS": "RSS",
+      "External": "外部内存",
+      "CPU": "CPU",
+      "Event Loop": "事件循环",
+      "UPTIME:": "运行时间：",
+      "Alerts": "告警",
+      "Notes": "备注",
+      "Recent Sessions": "最近会话",
+      "No sessions yet. Start a coding session with agentmemory hooks enabled.": "还没有会话。启用 agentmemory hooks 后开始一次编码会话。",
+      "Project": "项目",
+      "Status": "状态",
+      "Obs": "观察",
+      "Started": "开始时间",
+      "Recent Activity": "最近活动",
+      "No activity recorded yet": "还没有活动记录",
+      "targets": "目标",
+      "Function Metrics (OTel)": "函数指标 (OTel)",
+      "Function": "函数",
+      "Calls": "调用",
+      "Success": "成功",
+      "Fail": "失败",
+      "Avg Latency": "平均延迟",
+      "Quality": "质量",
+      "Workers": "Worker",
+      "Circuit Breaker Details": "断路器详情",
+      "State": "状态",
+      "Failures": "失败次数",
+      "Last Failure": "上次失败",
+      "Opened At": "打开时间",
+      "Semantic Memory": "语义记忆",
+      "No semantic facts yet. Observations will be consolidated into semantic memories over time.": "还没有语义事实。观察会随着时间被整合成语义记忆。",
+      "Fact": "事实",
+      "Procedural Memory": "过程记忆",
+      "No procedures yet. Repeated patterns will be extracted as procedures.": "还没有过程。重复模式会被提取成过程记忆。",
+      "Procedure": "过程",
+      "Trigger:": "触发：",
+      "Freq:": "频率：",
+      "Consolidation Status": "整合状态",
+      "Semantic facts": "语义事实",
+      "Procedures": "过程",
+      "Relations": "关系",
+      "Memory Relations": "记忆关系",
+      "Refresh": "刷新",
+      "Auto-refresh 30s": "30 秒自动刷新",
+      "Zoom In": "放大",
+      "Zoom Out": "缩小",
+      "Recenter": "重置视图",
+      "Graph query failed": "图谱查询失败",
+      "Retry": "重试",
+      "graph/query failed (check server logs for HTTP error)": "graph/query 失败（检查服务端日志里的 HTTP 错误）",
+      "Search nodes...": "搜索节点...",
+      "Graph Stats": "图谱统计",
+      "Nodes": "节点",
+      "Edges": "边",
+      "Filter by Type": "按类型筛选",
+      "Legend": "图例",
+      "Rebuild Graph": "重建图谱",
+      "No graph data yet.": "还没有图谱数据。",
+      "No graph data yet. Building from observations and memories...": "还没有图谱数据。正在从观察和记忆构建...",
+      "Rebuilding graph from observations...": "正在从观察重建图谱...",
+      "Set GRAPH_EXTRACTION_ENABLED=true to enable knowledge graph extraction.": "设置 GRAPH_EXTRACTION_ENABLED=true 以启用知识图谱抽取。",
+      "Type:": "类型：",
+      "Connections:": "连接数：",
+      "Expand neighbors": "展开邻居",
+      "Loading memories...": "正在加载记忆...",
+      "are durable facts, architecture notes, conventions, and lessons saved via": "是通过",
+      "MCP tool or the": "MCP 工具或",
+      "endpoint. They survive across sessions and supersede each other as v1, v2, etc.": "端点保存的持久事实、架构说明、约定和经验。它们会跨会话保留，并以 v1、v2 等形式相互取代。",
+      "Shown:": "显示：",
+      "total.": "总计。",
+      "Search memories...": "搜索记忆...",
+      "All types": "全部类型",
+      "No memories yet": "还没有记忆",
+      "Memories are the distilled facts agentmemory keeps across sessions — things like file paths, architectural decisions, and user preferences. Hooks capture them automatically during coding sessions; you can also save one directly.": "记忆是 agentmemory 跨会话保留的浓缩事实，例如文件路径、架构决策和用户偏好。Hooks 会在编码会话中自动捕获，你也可以直接保存一条。",
+      "Memory types →": "记忆类型 →",
+      "Title": "标题",
+      "Type": "类型",
+      "Strength": "强度",
+      "Version": "版本",
+      "Updated": "更新时间",
+      "Delete": "删除",
+      "Delete Memory": "删除记忆",
+      "Are you sure you want to delete": "确定要删除",
+      "This action cannot be undone.": "此操作无法撤销。",
+      "Cancel": "取消",
+      "Loading timeline...": "正在加载时间线...",
+      "Select session": "选择会话",
+      "All importance": "全部重要度",
+      "Select a session to view observations": "选择会话以查看观察",
+      "Loading observations...": "正在加载观察...",
+      "All": "全部",
+      "No observations": "没有观察",
+      "match the filter": "匹配筛选条件",
+      "for this session": "属于此会话",
+      "Observation": "观察",
+      "raw": "原始",
+      "Importance:": "重要度：",
+      "Input:": "输入：",
+      "Output:": "输出：",
+      "Prev": "上一页",
+      "Next": "下一页",
+      "Loading activity...": "正在加载活动...",
+      "Activity Heatmap (Past Year)": "活动热力图（过去一年）",
+      "Type Breakdown": "类型分布",
+      "Activity Feed": "活动流",
+      "No recent observations": "没有最近观察",
+      "Loading sessions...": "正在加载会话...",
+      "No sessions": "没有会话",
+      "Unknown session": "未知会话",
+      "missing id": "缺少 id",
+      "Loading session details…": "正在加载会话详情...",
+      "Session ·": "会话 ·",
+      "OBSERVATIONS": "观察",
+      "TOOLS USED": "使用的工具",
+      "FILES TOUCHED": "涉及文件",
+      "DURATION": "时长",
+      "Tool Invocations": "工具调用",
+      "Activity Breakdown": "活动分布",
+      "Files": "文件",
+      "Metadata": "元数据",
+      "End Session": "结束会话",
+      "Summarize": "总结",
+      "Summarize unavailable": "无法总结",
+      "Summarizing...": "正在总结...",
+      "Done": "完成",
+      "Loading lessons...": "正在加载经验...",
+      "are portable heuristics — short imperative rules (always/never/prefer/avoid) extracted from past work. Auto-surface from JSONL imports (low confidence, tag": "是从过往工作中提取的可迁移启发式规则：简短的命令式规则（always/never/prefer/avoid）。它们会从 JSONL 导入中自动浮现（低置信度，标签",
+      "), get reinforced when the agent applies them, and decay if unused. Higher confidence = more battle-tested.": "），当 agent 应用后得到强化，未使用则衰减。置信度越高，越经受过实践检验。",
+      "Search lessons...": "搜索经验...",
+      "No lessons yet": "还没有经验",
+      "Lessons are confidence-scored pattern observations — things you corrected once that the agent should never do again. They persist across projects.": "经验是带置信度评分的模式观察：你纠正过一次、agent 不应再犯的事。它们会跨项目保留。",
+      "Lesson decay & scoring →": "经验衰减和评分 →",
+      "Lesson": "经验",
+      "Confidence": "置信度",
+      "Reinforcements": "强化次数",
+      "Source": "来源",
+      "Loading actions...": "正在加载行动...",
+      "Search actions...": "搜索行动...",
+      "All statuses": "全部状态",
+      "No actions tracked yet": "还没有追踪行动",
+      "Actions are follow-ups the agent surfaced during a session:": "行动是 agent 在会话中浮现的后续事项：",
+      "decisions to revisit": "需要复查的决策",
+      "files to inspect": "需要检查的文件",
+      "tasks blocked on input": "等待输入而阻塞的任务",
+      "They show up here with status pending → active → done/blocked so nothing slips through between sessions.": "它们会以 pending → active → done/blocked 的状态显示在这里，避免跨会话遗漏。",
+      "Three ways to create them:": "三种创建方式：",
+      "Action lifecycle docs →": "行动生命周期文档 →",
+      "Priority": "优先级",
+      "Tags": "标签",
+      "Frontier": "前沿",
+      "Loading crystals...": "正在加载晶体...",
+      "Search crystals...": "搜索晶体...",
+      "No crystals yet": "还没有晶体",
+      "Crystals are compressed action digests — the 3-line summary of what happened in a session. Generated from long conversations to give the next session fast context without re-reading everything.": "晶体是压缩后的行动摘要，也就是会话发生内容的三行总结。它们从长对话生成，让下一次会话不用重读全部内容就能快速获得上下文。",
+      "Crystal pipeline →": "晶体流水线 →",
+      "Untitled crystal": "未命名晶体",
+      "LESSONS SURFACED": "浮现的经验",
+      "Loading audit log...": "正在加载审计日志...",
+      "All operations": "全部操作",
+      "No audit entries yet": "还没有审计条目",
+      "Audit entries are created by governance operations (delete, evolve, consolidate).": "审计条目由治理操作创建（delete、evolve、consolidate）。",
+      "target(s):": "目标：",
+      "Loading profile...": "正在加载画像...",
+      "No projects": "没有项目",
+      "Loading profile data...": "正在加载画像数据...",
+      "No profile data for this project": "此项目没有画像数据",
+      "Top Concepts": "高频概念",
+      "No concepts yet": "还没有概念",
+      "Top Files": "高频文件",
+      "No files yet": "还没有文件",
+      "Conventions": "约定",
+      "No conventions detected yet": "还没有检测到约定",
+      "Project Summary": "项目总结",
+      "Project Stats": "项目统计",
+      "Total Obs": "观察总数",
+      "Loading sessions…": "正在加载会话...",
+      "— pick a session —": "— 选择会话 —",
+      "Refresh": "刷新",
+      "Import JSONL": "导入 JSONL",
+      "Previous (←)": "上一个 (←)",
+      "Play/Pause (Space)": "播放/暂停 (空格)",
+      "Next (→)": "下一个 (→)",
+      "Reset": "重置",
+      "Pause": "暂停",
+      "Play": "播放",
+      "Speed": "速度",
+      "Pick a session to replay, or import Claude Code JSONL transcripts from ~/.claude/projects.": "选择一个会话回放，或从 ~/.claude/projects 导入 Claude Code JSONL 记录。",
+      "No event selected.": "未选择事件。",
+      "Tool:": "工具：",
+      "Input": "输入",
+      "Output": "输出",
+      "Loading replay…": "正在加载回放...",
+      "Importing JSONL…": "正在导入 JSONL...",
+      "Import failed": "导入失败",
+      "Learn more →": "了解更多 →",
+      "No LLM provider key set": "未设置 LLM provider key",
+      "Compression, summarization, and graph extraction stay disabled until a key is provided.": "在提供 key 之前，压缩、总结和图谱抽取会保持禁用。",
+      "Running in BM25-only mode": "正在以 BM25-only 模式运行",
+      "Semantic vector search is off. BM25 keyword search is active and good for exact matches.": "语义向量搜索已关闭。BM25 关键词搜索处于启用状态，适合精确匹配。",
+      "Feature flags": "功能开关",
+      "Dismiss": "关闭",
+      "note": "备注",
+      "off": "关闭"
+    };
+    var I18N_EN = {};
+    Object.keys(I18N_ZH).forEach(function(k) { I18N_EN[I18N_ZH[k]] = k; });
+    var I18N_ZH_PATTERNS = [
+      [/^polling · (\d+)s$/, function(m) { return '轮询 · ' + m[1] + ' 秒'; }],
+      [/^(\d+) active$/, function(m) { return m[1] + ' 个活跃'; }],
+      [/^(\d+) edges$/, function(m) { return m[1] + ' 条边'; }],
+      [/^(\d+) functions tracked$/, function(m) { return '已追踪 ' + m[1] + ' 个函数'; }],
+      [/^(\d+) failures$/, function(m) { return m[1] + ' 次失败'; }],
+      [/^(\d+) targets$/, function(m) { return m[1] + ' 个目标'; }],
+      [/^(\d+) total\.$/, function(m) { return '共 ' + m[1] + ' 条。'; }],
+      [/^(\d+) observations shown$/, function(m) { return '显示 ' + m[1] + ' 条观察'; }],
+      [/^(\d+) lessons$/, function(m) { return m[1] + ' 条经验'; }],
+      [/^(\d+) actions$/, function(m) { return m[1] + ' 个行动'; }],
+      [/^(\d+) crystals$/, function(m) { return m[1] + ' 个晶体'; }],
+      [/^(\d+) tools$/, function(m) { return m[1] + ' 个工具'; }],
+      [/^(\d+) files$/, function(m) { return m[1] + ' 个文件'; }],
+      [/^\+ (\d+) more\.\.\.$/, function(m) { return '还有 ' + m[1] + ' 项...'; }],
+      [/^\+(\d+) more$/, function(m) { return '还有 ' + m[1] + ' 项'; }],
+      [/^Page (\d+) of (\d+) \((\d+) total\)$/, function(m) { return '第 ' + m[1] + ' / ' + m[2] + ' 页（共 ' + m[3] + ' 条）'; }],
+      [/^Showing (\d+) of (\d+) nodes \(most-connected first\)\. The full graph is too large to render at once\.$/, function(m) { return '正在显示 ' + m[1] + ' / ' + m[2] + ' 个节点（连接最多优先）。完整图谱过大，无法一次渲染。'; }],
+      [/^Imported (\d+) file\(s\), (\d+) observation\(s\)$/, function(m) { return '已导入 ' + m[1] + ' 个文件，' + m[2] + ' 条观察'; }]
+    ];
+    var I18N_EN_PATTERNS = [
+      [/^轮询 · (\d+) 秒$/, function(m) { return 'polling · ' + m[1] + 's'; }],
+      [/^(\d+) 个活跃$/, function(m) { return m[1] + ' active'; }],
+      [/^(\d+) 条边$/, function(m) { return m[1] + ' edges'; }],
+      [/^已追踪 (\d+) 个函数$/, function(m) { return m[1] + ' functions tracked'; }],
+      [/^(\d+) 次失败$/, function(m) { return m[1] + ' failures'; }],
+      [/^(\d+) 个目标$/, function(m) { return m[1] + ' targets'; }],
+      [/^显示 (\d+) 条观察$/, function(m) { return m[1] + ' observations shown'; }],
+      [/^第 (\d+) \/ (\d+) 页（共 (\d+) 条）$/, function(m) { return 'Page ' + m[1] + ' of ' + m[2] + ' (' + m[3] + ' total)'; }]
+    ];
+
+    function readSavedLanguage() {
+      try {
+        var saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+        if (saved === 'zh-CN' || saved === 'en') return saved;
+      } catch (_) {}
+      var nav = typeof navigator !== 'undefined' ? navigator : {};
+      var navLang = ((nav.language || nav.userLanguage || '') || '').toLowerCase();
+      return navLang.indexOf('zh') === 0 ? 'zh-CN' : 'en';
+    }
+    var currentLanguage = readSavedLanguage();
+    function translatePhrase(text) {
+      var raw = String(text == null ? '' : text);
+      if (!raw) return raw;
+      var leading = raw.match(/^\s*/)[0];
+      var trailing = raw.match(/\s*$/)[0];
+      var core = raw.trim();
+      if (!core) return raw;
+      var exact = currentLanguage === 'zh-CN' ? I18N_ZH[core] : I18N_EN[core];
+      if (exact) return leading + exact + trailing;
+      var patterns = currentLanguage === 'zh-CN' ? I18N_ZH_PATTERNS : I18N_EN_PATTERNS;
+      for (var i = 0; i < patterns.length; i++) {
+        var match = core.match(patterns[i][0]);
+        if (match) return leading + patterns[i][1](match) + trailing;
+      }
+      return raw;
+    }
+    function tr(text) { return translatePhrase(text); }
+    var applyingLanguage = false;
+    function localizeNode(root) {
+      if (!root || applyingLanguage) return;
+      applyingLanguage = true;
+      try {
+        var skip = { SCRIPT: true, STYLE: true, PRE: true, CODE: true, TEXTAREA: true };
+        if (typeof document.createTreeWalker === 'function' && typeof NodeFilter !== 'undefined') {
+          var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+            acceptNode: function(node) {
+              var parent = node.parentElement;
+              if (!parent || skip[parent.tagName]) return NodeFilter.FILTER_REJECT;
+              return node.nodeValue && node.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+            }
+          });
+          var textNode;
+          while ((textNode = walker.nextNode())) {
+            var nextText = translatePhrase(textNode.nodeValue);
+            if (nextText !== textNode.nodeValue) textNode.nodeValue = nextText;
+          }
+        }
+        var attrNames = ['placeholder', 'title', 'aria-label'];
+        var nodes = [];
+        if (root.nodeType === 1) nodes.push(root);
+        if (typeof root.querySelectorAll === 'function') {
+          root.querySelectorAll('[placeholder],[title],[aria-label]').forEach(function(el) { nodes.push(el); });
+        }
+        nodes.forEach(function(el) {
+          attrNames.forEach(function(attr) {
+            if (!el.getAttribute || !el.setAttribute) return;
+            var val = el.getAttribute(attr);
+            if (!val) return;
+            var nextVal = translatePhrase(val);
+            if (nextVal !== val) el.setAttribute(attr, nextVal);
+          });
+        });
+      } finally {
+        applyingLanguage = false;
+      }
+    }
+    function updateDateline() {
+      var dateEl = document.getElementById('dateline');
+      if (dateEl) dateEl.textContent = new Date().toLocaleDateString(currentLanguage === 'zh-CN' ? 'zh-CN' : 'en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+    }
+    function updateThemeButton() {
+      var btn = document.getElementById('theme-toggle');
+      if (!btn) return;
+      var source = isDarkMode() ? 'LIGHT' : 'DARK';
+      btn.setAttribute('data-i18n-source', source);
+      btn.textContent = tr(source);
+    }
+    function updateWsStatusLanguage() {
+      var el = document.getElementById('ws-status');
+      if (!el) return;
+      var source = el.getAttribute ? (el.getAttribute('data-i18n-source') || el.textContent) : el.textContent;
+      if (el.setAttribute) el.setAttribute('data-i18n-source', source);
+      el.textContent = tr(source);
+    }
+    function applyLanguageToDocument() {
+      document.documentElement.lang = currentLanguage;
+      document.title = tr('iclaude viewer');
+      updateDateline();
+      updateThemeButton();
+      updateWsStatusLanguage();
+      var sel = document.getElementById('language-select');
+      if (sel) sel.value = currentLanguage;
+      if (document.body) localizeNode(document.body);
+    }
+    function refreshActiveTabForLanguage() {
+      if (!state || !state.activeTab) return;
+      if (state.activeTab === 'dashboard' && state.dashboard.loaded) renderDashboard();
+      else if (state.activeTab === 'graph' && state.graph.loaded) { renderGraphSidebar(); renderGraph(); }
+      else if (state.activeTab === 'memories' && state.memories.loaded) renderMemories();
+      else if (state.activeTab === 'timeline' && state.timeline.loaded) renderObservations();
+      else if (state.activeTab === 'sessions' && state.sessions.loaded) renderSessions();
+      else if (state.activeTab === 'lessons' && state.lessons.loaded) renderLessons();
+      else if (state.activeTab === 'actions' && state.actions.loaded) renderActions();
+      else if (state.activeTab === 'crystals' && state.crystals.loaded) renderCrystals();
+      else if (state.activeTab === 'audit' && state.audit.loaded) renderAudit();
+      else if (state.activeTab === 'activity' && state.activity.loaded) renderActivity();
+      else if (state.activeTab === 'profile' && state.profile.loaded) renderProfile();
+      else if (state.activeTab === 'replay' && state.replay.loaded) renderReplay();
+    }
+    function setLanguage(lang, persist) {
+      currentLanguage = lang === 'zh-CN' ? 'zh-CN' : 'en';
+      if (persist) {
+        try { localStorage.setItem(LANGUAGE_STORAGE_KEY, currentLanguage); } catch (_) {}
+      }
+      if (state && state.flagsConfig) renderFlagBanners(state.flagsConfig);
+      refreshActiveTabForLanguage();
+      applyLanguageToDocument();
+    }
+    function initLanguageSelect() {
+      var sel = document.getElementById('language-select');
+      if (!sel) return;
+      sel.value = currentLanguage;
+      sel.addEventListener('change', function() { setLanguage(sel.value, true); });
+    }
+    function startLanguageObserver() {
+      if (typeof MutationObserver === 'undefined' || !document.body) return;
+      var pending = false;
+      var observer = new MutationObserver(function() {
+        if (applyingLanguage || pending) return;
+        pending = true;
+        setTimeout(function() {
+          pending = false;
+          applyLanguageToDocument();
+        }, 0);
+      });
+      observer.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['placeholder', 'title', 'aria-label'] });
+    }
+    initLanguageSelect();
+    applyLanguageToDocument();
+    startLanguageObserver();
 
     function isDarkMode() { return document.documentElement.dataset.theme === 'dark'; }
     function applyTheme(dark, persist) {
       document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-      var btn = document.getElementById('theme-toggle');
-      if (btn) btn.textContent = dark ? 'LIGHT' : 'DARK';
+      updateThemeButton();
       if (persist) localStorage.setItem('agentmemory-theme', dark ? 'dark' : 'light');
     }
     window.toggleTheme = function() { applyTheme(!isDarkMode(), true); };
@@ -1422,9 +1875,9 @@
         html += '<div class="card" style="margin-bottom:14px;padding:24px 28px;background:var(--bg-subtle);border-left:3px solid var(--accent);">' +
           '<div style="font-family:var(--font-ui);font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:8px;">First run &rarr; magical moment in 10 seconds</div>' +
           '<div style="font-family:var(--font-display,Lora,Georgia,serif);font-size:22px;font-weight:700;color:var(--ink);margin-bottom:8px;">Seed sample data + prove semantic recall works</div>' +
-          '<div style="font-size:13px;color:var(--ink-muted);margin-bottom:12px;line-height:1.5;max-width:640px;">agentmemory is running but hasn&rsquo;t seen any sessions yet. Run the demo command in a second terminal: it seeds 3 realistic coding sessions and proves the hybrid search finds semantically-related memories that keyword search would miss.</div>' +
-          '<pre style="display:inline-block;margin:0;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:4px;font-family:var(--font-mono);font-size:12px;color:var(--ink);">npx @agentmemory/agentmemory demo</pre>' +
-          '<div style="margin-top:10px;"><a class="empty-link" href="https://github.com/rohitg00/agentmemory#quick-start" target="_blank" rel="noopener" style="font-size:12px;">Or: wire up your real agent &rarr;</a></div>' +
+          '<div style="font-size:13px;color:var(--ink-muted);margin-bottom:12px;line-height:1.5;max-width:640px;">iclaude is running but hasn&rsquo;t seen any sessions yet. Run the demo command in a second terminal: it seeds 3 realistic coding sessions and proves the hybrid search finds semantically-related memories that keyword search would miss.</div>' +
+          '<pre style="display:inline-block;margin:0;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:4px;font-family:var(--font-mono);font-size:12px;color:var(--ink);">iclaude demo</pre>' +
+          '<div style="margin-top:10px;"><a class="empty-link" href="https://github.com/gaojunbin/iclaude#quick-start" target="_blank" rel="noopener" style="font-size:12px;">Or: wire up your real agent &rarr;</a></div>' +
           '</div>';
       }
       html += '<div class="stats-grid">';
@@ -2474,7 +2927,7 @@
           '<div class="empty-title">No memories yet</div>' +
           '<div class="empty-lead">Memories are the distilled facts agentmemory keeps across sessions &mdash; things like file paths, architectural decisions, and user preferences. Hooks capture them automatically during coding sessions; you can also save one directly.</div>' +
           '<pre class="empty-cmd">memory_remember {\n  title: "auth uses jose middleware",\n  content: "src/middleware/auth.ts handles JWT validation",\n  type: "architecture"\n}</pre>' +
-          '<div><a class="empty-link" href="https://github.com/rohitg00/agentmemory#memories" target="_blank" rel="noopener">Memory types &rarr;</a></div>' +
+          '<div><a class="empty-link" href="https://github.com/gaojunbin/iclaude#memories" target="_blank" rel="noopener">Memory types &rarr;</a></div>' +
           '</div>';
       } else {
         html += '<table><tr><th>Title</th><th>Type</th><th>Strength</th><th>Version</th><th>Updated</th><th>Actions</th></tr>';
@@ -3110,7 +3563,7 @@
           '<div class="empty-title">No lessons yet</div>' +
           '<div class="empty-lead">Lessons are confidence-scored pattern observations &mdash; things you corrected once that the agent should never do again. They persist across projects.</div>' +
           '<pre class="empty-cmd"># Save a lesson explicitly\nmemory_lesson_save { rule, reason, confidence }\n\n# Or: Replay tab &rarr; Import JSONL auto-extracts lessons\n# from your past Claude Code sessions</pre>' +
-          '<div><a class="empty-link" href="https://github.com/rohitg00/agentmemory#lessons" target="_blank" rel="noopener">Lesson decay &amp; scoring &rarr;</a></div>' +
+          '<div><a class="empty-link" href="https://github.com/gaojunbin/iclaude#lessons" target="_blank" rel="noopener">Lesson decay &amp; scoring &rarr;</a></div>' +
           '</div>';
       } else {
         html += '<table><thead><tr><th>Lesson</th><th>Confidence</th><th>Reinforcements</th><th>Source</th><th>Project</th><th>Updated</th></tr></thead><tbody>';
@@ -3180,7 +3633,7 @@
           '<div class="empty-lead">Actions are follow-ups the agent surfaced during a session: <em>decisions to revisit</em>, <em>files to inspect</em>, <em>tasks blocked on input</em>. They show up here with status pending &rarr; active &rarr; done/blocked so nothing slips through between sessions.</div>' +
           '<div class="empty-lead" style="margin-top:0;">Three ways to create them:</div>' +
           '<pre class="empty-cmd"># 1. MCP tool (from any agent)\nmemory_action_create { title, description, priority }\n\n# 2. Curl\ncurl -X POST http://localhost:3111/agentmemory/actions \\\n  -H \'Content-Type: application/json\' \\\n  -d \'{"title":"ship v1","priority":"high"}\'\n\n# 3. Hooks auto-extract from long session bodies</pre>' +
-          '<div><a class="empty-link" href="https://github.com/rohitg00/agentmemory#actions" target="_blank" rel="noopener">Action lifecycle docs &rarr;</a></div>' +
+          '<div><a class="empty-link" href="https://github.com/gaojunbin/iclaude#actions" target="_blank" rel="noopener">Action lifecycle docs &rarr;</a></div>' +
           '</div>';
       } else {
         html += '<table><thead><tr><th>Title</th><th>Status</th><th>Priority</th><th>Tags</th><th>Frontier</th><th>Updated</th></tr></thead><tbody>';
@@ -3266,7 +3719,7 @@
           '<div class="empty-title">No crystals yet</div>' +
           '<div class="empty-lead">Crystals are compressed action digests &mdash; the 3-line summary of what happened in a session. Generated from long conversations to give the next session fast context without re-reading everything.</div>' +
           '<pre class="empty-cmd"># Auto: import a JSONL transcript\n#   Replay tab &rarr; Import JSONL\n\n# Manual: crystallize a specific session\nmemory_crystallize { sessionId }</pre>' +
-          '<div><a class="empty-link" href="https://github.com/rohitg00/agentmemory#crystals" target="_blank" rel="noopener">Crystal pipeline &rarr;</a></div>' +
+          '<div><a class="empty-link" href="https://github.com/gaojunbin/iclaude#crystals" target="_blank" rel="noopener">Crystal pipeline &rarr;</a></div>' +
           '</div>';
       } else {
         items.forEach(function(c) {
@@ -3516,7 +3969,8 @@
     function setWsStatus(text, cls) {
       var el = document.getElementById('ws-status');
       if (!el) return;
-      el.textContent = text;
+      if (el.setAttribute) el.setAttribute('data-i18n-source', text);
+      el.textContent = tr(text);
       el.className = 'ws-status ' + cls;
     }
 
@@ -3762,8 +4216,8 @@
           title: 'No LLM provider key set',
           keyLabel: 'ANTHROPIC_API_KEY',
           desc: 'Compression, summarization, and graph extraction stay disabled until a key is provided.',
-          enable: 'export ANTHROPIC_API_KEY=sk-ant-...\n# then restart: npx @agentmemory/agentmemory',
-          docs: 'https://github.com/rohitg00/agentmemory#quick-start',
+          enable: 'export ANTHROPIC_API_KEY=sk-ant-...\n# then restart: iclaude',
+          docs: 'https://github.com/gaojunbin/iclaude#quick-start',
           dismissKey: '__provider_noop',
         });
       }
@@ -3775,7 +4229,7 @@
           keyLabel: 'OPENAI_API_KEY',
           desc: 'Semantic vector search is off. BM25 keyword search is active and good for exact matches.',
           enable: 'export OPENAI_API_KEY=sk-...\n# or VOYAGE_API_KEY, COHERE_API_KEY, OLLAMA_HOST',
-          docs: 'https://github.com/rohitg00/agentmemory#embedding-providers',
+          docs: 'https://github.com/gaojunbin/iclaude#embedding-providers',
           dismissKey: '__embedding_none',
         });
       }
@@ -3835,7 +4289,7 @@
           '### Steps to reproduce\n\n' +
           '1. \n2. \n3. \n'
         );
-        fbEl.href = 'https://github.com/rohitg00/agentmemory/issues/new?title=' +
+        fbEl.href = 'https://github.com/gaojunbin/iclaude/issues/new?title=' +
           encodeURIComponent('[viewer] ') + '&body=' + body;
       }
     }
@@ -4172,10 +4626,10 @@
       var res = await apiPost('replay/import-jsonl', body);
       if (!res || res.success === false) {
         el.innerHTML = prior;
-        alert((res && res.error) || 'Import failed');
+        alert((res && res.error) || tr('Import failed'));
         return;
       }
-      alert('Imported ' + (res.imported || 0) + ' file(s), ' + (res.observations || 0) + ' observation(s)');
+      alert(tr('Imported ' + (res.imported || 0) + ' file(s), ' + (res.observations || 0) + ' observation(s)'));
       await refreshReplaySessions();
     }
 

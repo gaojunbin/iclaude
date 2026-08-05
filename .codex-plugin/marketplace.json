@@ -1,16 +1,16 @@
 {
-  "name": "agentmemory",
+  "name": "iclaude",
   "interface": {
-    "displayName": "agentmemory"
+    "displayName": "iclaude"
   },
   "plugins": [
     {
-      "name": "agentmemory",
+      "name": "iclaude",
       "source": {
         "source": "git-subdir",
-        "url": "https://github.com/rohitg00/agentmemory.git",
+        "url": "https://github.com/gaojunbin/iclaude.git",
         "path": "./plugin",
-        "ref": "main"
+        "ref": "master"
       },
       "policy": {
         "installation": "AVAILABLE",

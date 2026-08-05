@@ -1,9 +1,9 @@
 {
   "mcpServers": {
-    "agentmemory": {
+    "iclaude": {
       "type": "local",
       "command": "npx",
-      "args": ["-y", "@agentmemory/mcp"],
+      "args": ["-y", "iclaude-mcp"],
       "env": {
         "AGENTMEMORY_URL": "${AGENTMEMORY_URL:-http://localhost:3111}",
         "AGENTMEMORY_SECRET": "${AGENTMEMORY_SECRET:-}",

@@ -206,6 +206,21 @@ describe("viewer session rendering", () => {
     expect(prompt.innerHTML).not.toContain("/data/.hmac");
   });
 
+  it("supports switching viewer language between English and Chinese", () => {
+    const { sandbox } = loadViewerSandbox();
+
+    sandbox.setLanguage("zh-CN", false);
+
+    expect(sandbox.currentLanguage).toBe("zh-CN");
+    expect(sandbox.tr("Dashboard")).toBe("仪表盘");
+    expect(sandbox.tr("Viewer authorization required")).toBe("需要 Viewer 授权");
+
+    sandbox.setLanguage("en", false);
+
+    expect(sandbox.currentLanguage).toBe("en");
+    expect(sandbox.tr("仪表盘")).toBe("Dashboard");
+  });
+
   it("does not throw when dashboard sessions are missing ids", () => {
     const { sandbox, getElement } = loadViewerSandbox();
     sandbox.state.dashboard = {
